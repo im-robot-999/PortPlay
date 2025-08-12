@@ -1,0 +1,178 @@
+name: PortPlay CI/CD
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  # Lint and Type Check
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+      
+      - name: Install pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8
+      
+      - name: Install dependencies
+        run: pnpm install
+      
+      - name: Lint shared package
+        run: pnpm --filter @portplay/shared lint
+      
+      - name: Lint server package
+        run: pnpm --filter @portplay/server lint
+      
+      - name: Lint frontend package
+        run: pnpm --filter @portplay/frontend lint
+      
+      - name: Type check shared package
+        run: pnpm --filter @portplay/shared build
+      
+      - name: Type check server package
+        run: pnpm --filter @portplay/server build
+      
+      - name: Type check frontend package
+        run: pnpm --filter @portplay/frontend build
+
+  # Test
+  test:
+    runs-on: ubuntu-latest
+    needs: lint
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+      
+      - name: Install pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8
+      
+      - name: Install dependencies
+        run: pnpm install
+      
+      - name: Run tests
+        run: pnpm test
+      
+      - name: Upload coverage reports
+        uses: codecov/codecov-action@v3
+        with:
+          file: ./coverage/lcov.info
+          flags: unittests
+          name: codecov-umbrella
+
+  # Build
+  build:
+    runs-on: ubuntu-latest
+    needs: [lint, test]
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+      
+      - name: Install pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8
+      
+      - name: Install dependencies
+        run: pnpm install
+      
+      - name: Build shared package
+        run: pnpm --filter @portplay/shared build
+      
+      - name: Build server package
+        run: pnpm --filter @portplay/server build
+      
+      - name: Build frontend package
+        run: pnpm --filter @portplay/frontend build
+      
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: build-artifacts
+          path: |
+            shared/dist/
+            server/dist/
+            frontend/dist/
+
+  # Docker Build
+  docker:
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      
+      - name: Build and push server image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./server
+          push: true
+          tags: |
+            portplay/server:latest
+            portplay/server:${{ github.sha }}
+      
+      - name: Build and push frontend image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./frontend
+          push: true
+          tags: |
+            portplay/frontend:latest
+            portplay/frontend:${{ github.sha }}
+
+  # Deploy (Preview)
+  deploy-preview:
+    runs-on: ubuntu-latest
+    needs: [build, docker]
+    if: github.event_name == 'pull_request'
+    steps:
+      - name: Deploy to preview environment
+        run: |
+          echo "Deploying to preview environment..."
+          echo "This would deploy to a staging/preview environment"
+          echo "Frontend: https://preview.portplay.game"
+          echo "Server: https://api-preview.portplay.game"
+
+  # Deploy (Production)
+  deploy-production:
+    runs-on: ubuntu-latest
+    needs: [build, docker]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    environment: production
+    steps:
+      - name: Deploy to production
+        run: |
+          echo "Deploying to production environment..."
+          echo "This would deploy to the production environment"
+          echo "Frontend: https://portplay.game"
+          echo "Server: https://api.portplay.game"
