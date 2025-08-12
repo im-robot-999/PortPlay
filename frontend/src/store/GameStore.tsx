@@ -1,8 +1,6 @@
-import React, { createContext, useContext, ReactNode } from 'react';
+import React, { ReactNode } from 'react';
 import { create } from 'zustand';
-import { devtools } from 'zustand/middleware';
 import { PlayerState, GameSnapshot, InputState } from '@portplay/shared';
-import { ClientUtils } from '../game/functions';
 
 interface GameState {
   // Player state
@@ -41,10 +39,99 @@ interface GameState {
   resetGame: () => void;
 }
 
-const useGameStore = create<GameState>()(
-  devtools(
-    (set, get) => ({
-      // Initial state
+// Create the Zustand store hook
+const useGameStore = create<GameState>((set) => ({
+  // Initial state
+  playerId: '',
+  username: '',
+  playerState: null,
+  currentRoom: null,
+  gameSnapshot: null,
+  isConnected: false,
+  isGameRunning: false,
+  currentInput: {
+    forward: false,
+    backward: false,
+    left: false,
+    right: false,
+    jump: false,
+    run: false,
+    dash: false,
+    attack: false,
+    interact: false,
+    useItem: false
+  },
+  inputSequence: 0,
+  showInventory: false,
+  showChat: false,
+  showPauseMenu: false,
+
+  // Actions
+  setPlayer: (playerId: string, username: string) => {
+    set({ playerId, username });
+  },
+
+  setPlayerState: (state: PlayerState) => {
+    set({ playerState: state });
+  },
+
+  setGameSnapshot: (snapshot: GameSnapshot) => {
+    set({ gameSnapshot: snapshot });
+  },
+
+  setCurrentRoom: (roomId: string | null) => {
+    set({ currentRoom: roomId });
+  },
+
+  setConnectionStatus: (connected: boolean) => {
+    set({ isConnected: connected });
+  },
+
+  setGameRunning: (running: boolean) => {
+    set({ isGameRunning: running });
+  },
+
+  updateInput: (input: Partial<InputState>) => {
+    set((state) => ({
+      currentInput: { ...state.currentInput, ...input }
+    }));
+  },
+
+  resetInput: () => {
+    set({
+      currentInput: {
+        forward: false,
+        backward: false,
+        left: false,
+        right: false,
+        jump: false,
+        run: false,
+        dash: false,
+        attack: false,
+        interact: false,
+        useItem: false
+      }
+    });
+  },
+
+  incrementInputSequence: () => {
+    set((state) => ({ inputSequence: state.inputSequence + 1 }));
+  },
+
+  toggleInventory: () => {
+    set((state) => ({ showInventory: !state.showInventory }));
+  },
+
+  toggleChat: () => {
+    set((state) => ({ showChat: !state.showChat }));
+  },
+
+  togglePauseMenu: () => {
+    set((state) => ({ showPauseMenu: !state.showPauseMenu }));
+  },
+
+  resetGame: () => {
+    set({
       playerId: '',
       username: '',
       playerState: null,
@@ -52,113 +139,33 @@ const useGameStore = create<GameState>()(
       gameSnapshot: null,
       isConnected: false,
       isGameRunning: false,
-      currentInput: ClientUtils.createDefaultInputState(),
+      currentInput: {
+        forward: false,
+        backward: false,
+        left: false,
+        right: false,
+        jump: false,
+        run: false,
+        dash: false,
+        attack: false,
+        interact: false,
+        useItem: false
+      },
       inputSequence: 0,
       showInventory: false,
       showChat: false,
-      showPauseMenu: false,
-
-      // Actions
-      setPlayer: (playerId: string, username: string) => {
-        const playerState = ClientUtils.createDefaultPlayerState(playerId, username);
-        set({
-          playerId,
-          username,
-          playerState
-        });
-      },
-
-      setPlayerState: (state: PlayerState) => {
-        set({ playerState: state });
-      },
-
-      setGameSnapshot: (snapshot: GameSnapshot) => {
-        set({ gameSnapshot: snapshot });
-      },
-
-      setCurrentRoom: (roomId: string | null) => {
-        set({ currentRoom: roomId });
-      },
-
-      setConnectionStatus: (connected: boolean) => {
-        set({ isConnected: connected });
-      },
-
-      setGameRunning: (running: boolean) => {
-        set({ isGameRunning: running });
-      },
-
-      updateInput: (input: Partial<InputState>) => {
-        set((state) => ({
-          currentInput: { ...state.currentInput, ...input }
-        }));
-      },
-
-      resetInput: () => {
-        set({ currentInput: ClientUtils.createDefaultInputState() });
-      },
-
-      incrementInputSequence: () => {
-        set((state) => ({ inputSequence: state.inputSequence + 1 }));
-      },
-
-      toggleInventory: () => {
-        set((state) => ({ showInventory: !state.showInventory }));
-      },
-
-      toggleChat: () => {
-        set((state) => ({ showChat: !state.showChat }));
-      },
-
-      togglePauseMenu: () => {
-        set((state) => ({ showPauseMenu: !state.showPauseMenu }));
-      },
-
-      resetGame: () => {
-        set({
-          playerId: '',
-          username: '',
-          playerState: null,
-          currentRoom: null,
-          gameSnapshot: null,
-          isConnected: false,
-          isGameRunning: false,
-          currentInput: ClientUtils.createDefaultInputState(),
-          inputSequence: 0,
-          showInventory: false,
-          showChat: false,
-          showPauseMenu: false
-        });
-      }
-    }),
-    {
-      name: 'portplay-game-store'
-    }
-  )
-);
-
-// Context for React components
-const GameContext = createContext<ReturnType<typeof useGameStore> | null>(null);
-
-// Provider component
-export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const store = useGameStore();
-  
-  return (
-    <GameContext.Provider value={store}>
-      {children}
-    </GameContext.Provider>
-  );
-};
-
-// Hook for using the store in components
-export const useGame = () => {
-  const context = useContext(GameContext);
-  if (!context) {
-    throw new Error('useGame must be used within a GameProvider');
+      showPauseMenu: false
+    });
   }
-  return context;
+}));
+
+// No-op provider for compatibility with existing App.tsx
+export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+  return <>{children}</>;
 };
 
-// Export the store for direct usage
+// Export the hook directly for components
+export const useGame = useGameStore;
+
+// Export the store for direct usage if needed
 export { useGameStore };

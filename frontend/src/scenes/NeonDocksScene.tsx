@@ -1,6 +1,6 @@
 import React, { useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
-import { useGLTF, Environment, Sky } from '@react-three/drei';
+import { Environment, Sky } from '@react-three/drei';
 import * as THREE from 'three';
 
 export const NeonDocksScene: React.FC = () => {

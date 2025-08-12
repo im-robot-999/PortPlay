@@ -132,7 +132,7 @@ export class ClientPrediction {
     // Jump prediction
     if (input.jump && player.position.y <= 0.1) {
       newVelocity.y = 8.0;
-      newAnimationState = 'jumping';
+      newAnimationState = AnimationState.JUMPING;
     }
 
     // Dash prediction
@@ -140,7 +140,7 @@ export class ClientPrediction {
       const dashDirection = this.normalizeMovementVector(input);
       newVelocity.x += dashDirection.x * 15.0;
       newVelocity.z += dashDirection.z * 15.0;
-      newAnimationState = 'dashing';
+      newAnimationState = AnimationState.DASHING;
     }
 
     // Update position based on velocity
@@ -155,18 +155,18 @@ export class ClientPrediction {
     if (newPosition.y < 0) {
       newPosition.y = 0;
       newVelocity.y = 0;
-      newAnimationState = player.velocity.y < -2 ? 'falling' : 'idle';
+      newAnimationState = player.velocity.y < -2 ? AnimationState.FALLING : AnimationState.IDLE;
     }
 
     // Update animation state
     if (Math.abs(newVelocity.x) > 0.1 || Math.abs(newVelocity.z) > 0.1) {
       if (input.run) {
-        newAnimationState = 'running';
+        newAnimationState = AnimationState.RUNNING;
       } else {
-        newAnimationState = 'walking';
+        newAnimationState = AnimationState.WALKING;
       }
     } else if (newPosition.y <= 0.1) {
-      newAnimationState = 'idle';
+      newAnimationState = AnimationState.IDLE;
     }
 
     return {
@@ -409,7 +409,7 @@ export class ClientUtils {
       rotation: { x: 0, y: 0, z: 0, w: 1 },
       health: 100,
       maxHealth: 100,
-      animationState: 'idle',
+      animationState: AnimationState.IDLE,
       inventory: [],
       xp: 0,
       level: 1,

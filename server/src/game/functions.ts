@@ -8,7 +8,8 @@ import {
   QuestProgress,
   QuestState,
   ItemType,
-  InventoryItem
+  InventoryItem,
+  AnimationState
 } from '@portplay/shared';
 import { 
   createVector3, 
@@ -81,7 +82,7 @@ export function applyPlayerInput(
   // Handle jumping
   if (input.jump && player.position.y <= GAME_CONSTANTS.GROUND_Y + 0.1) {
     newVelocity.y = GAME_CONSTANTS.JUMP_FORCE;
-    newAnimationState = 'jumping';
+    newAnimationState = AnimationState.JUMPING;
   }
 
   // Handle dashing
@@ -89,7 +90,7 @@ export function applyPlayerInput(
     const dashDirection = normalizeMovementVector(input);
     newVelocity.x += dashDirection.x * GAME_CONSTANTS.DASH_FORCE;
     newVelocity.z += dashDirection.z * GAME_CONSTANTS.DASH_FORCE;
-    newAnimationState = 'dashing';
+    newAnimationState = AnimationState.DASHING;
   }
 
   // Update position based on velocity
@@ -101,18 +102,18 @@ export function applyPlayerInput(
   if (newPosition.y < GAME_CONSTANTS.GROUND_Y) {
     newPosition.y = GAME_CONSTANTS.GROUND_Y;
     newVelocity.y = 0;
-    newAnimationState = player.velocity.y < -2 ? 'falling' : 'idle';
+    newAnimationState = player.velocity.y < -2 ? AnimationState.FALLING : AnimationState.IDLE;
   }
 
   // Update animation state based on movement
   if (Math.abs(newVelocity.x) > 0.1 || Math.abs(newVelocity.z) > 0.1) {
     if (input.run) {
-      newAnimationState = 'running';
+      newAnimationState = AnimationState.RUNNING;
     } else {
-      newAnimationState = 'walking';
+      newAnimationState = AnimationState.WALKING;
     }
   } else if (newPosition.y <= GAME_CONSTANTS.GROUND_Y + 0.1) {
-    newAnimationState = 'idle';
+    newAnimationState = AnimationState.IDLE;
   }
 
   return {

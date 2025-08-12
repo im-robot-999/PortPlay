@@ -12,8 +12,7 @@ interface GameHUDProps {
 export const GameHUD: React.FC<GameHUDProps> = ({
   gameSession,
   currentInput,
-  onPause,
-  onReturnToLobby
+  onPause
 }) => {
   const [showControls, setShowControls] = useState(false);
   const [showInventory, setShowInventory] = useState(false);

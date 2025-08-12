@@ -230,18 +230,3 @@ export const InputSnapshotSchema = z.object({
   input: InputStateSchema,
   timestamp: z.number()
 });
-
-// Type exports
-export type {
-  Vector3,
-  Quaternion,
-  InputState,
-  PlayerState,
-  InventoryItem,
-  GameEntity,
-  QuestProgress,
-  GameSnapshot,
-  InputSnapshot,
-  GameRoom,
-  Chapter
-};

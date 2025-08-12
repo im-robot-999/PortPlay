@@ -1,4 +1,4 @@
-import { GameRoom, PlayerState, Chapter } from '@portplay/shared';
+import { GameRoom, PlayerState, Chapter, AnimationState } from '@portplay/shared';
 import { GameLoop } from './GameLoop';
 import { GAME_CONSTANTS } from './functions';
 
@@ -94,7 +94,7 @@ export class RoomManager {
       rotation: { x: 0, y: 0, z: 0, w: 1 },
       health: GAME_CONSTANTS.MAX_HEALTH,
       maxHealth: GAME_CONSTANTS.MAX_HEALTH,
-      animationState: 'idle',
+      animationState: AnimationState.IDLE,
       inventory: [],
       xp: 0,
       level: 1,

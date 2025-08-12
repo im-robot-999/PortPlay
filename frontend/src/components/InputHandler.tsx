@@ -8,7 +8,7 @@ interface InputHandlerProps {
 
 export const InputHandler: React.FC<InputHandlerProps> = ({
   currentInput,
-  onInputChange
+  onInputChange: _onInputChange
 }) => {
   return (
     <div className="absolute bottom-4 left-4 z-20">

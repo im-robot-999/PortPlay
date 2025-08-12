@@ -1,4 +1,4 @@
-import { GameSnapshot, PlayerState, GameEntity, QuestProgress } from '@portplay/shared';
+import { GameSnapshot, PlayerState, GameEntity, QuestProgress, AnimationState } from '@portplay/shared';
 import { 
   createGameSnapshot, 
   applyInputToSnapshot, 
@@ -199,9 +199,9 @@ export class GameLoop {
 
     // Update animation state
     if (input.forward || input.backward || input.left || input.right) {
-      newAnimationState = input.run ? 'running' : 'walking';
+      newAnimationState = input.run ? AnimationState.RUNNING : AnimationState.WALKING;
     } else {
-      newAnimationState = 'idle';
+      newAnimationState = AnimationState.IDLE;
     }
 
     return {

@@ -1,0 +1,50 @@
+# Node
+node_modules/
+
+# pnpm
+pnpm-lock.yaml
+.pnpm-store/
+
+# Build outputs
+/dist/
+**/dist/
+**/build/
+**/.next/
+
+# TypeScript
+**/*.tsbuildinfo
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+logs/
+*.log
+
+# Env
+.env
+*.env.local
+*.env.development
+*.env.production
+.envrc
+
+# Vite
+**/.vite/
+**/vite-temp/
+
+# Coverage
+coverage/
+
+# IDE/editor
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Docker
+**/.docker/
+
+# Misc
+*.swp
+*.swo
