@@ -1,12 +1,15 @@
-import React, { useRef } from 'react';
+import React, { useRef, useState } from 'react';
 import { useFrame } from '@react-three/fiber';
-import { Environment, Sky } from '@react-three/drei';
+import { Environment, Sky, Text, Float } from '@react-three/drei';
 import * as THREE from 'three';
 
 export const NeonDocksScene: React.FC = () => {
   const groupRef = useRef<THREE.Group>(null);
   const neonSignsRef = useRef<THREE.Group>(null);
   const waterRef = useRef<THREE.Mesh>(null);
+  const [collectedItems] = useState<Set<number>>(new Set());
+  const [crateFound] = useState(false);
+  const [manifestFound] = useState(false);
 
   // Animate neon signs and water
   useFrame((state) => {
@@ -27,6 +30,17 @@ export const NeonDocksScene: React.FC = () => {
     if (waterRef.current) {
       waterRef.current.position.y = Math.sin(time * 0.5) * 0.1;
     }
+
+    // Animate floating collectibles
+    const collectibles = groupRef.current?.children.filter(child => 
+      child.userData.isCollectible
+    );
+    
+    collectibles?.forEach((collectible, index) => {
+      const floatOffset = Math.sin(time * 1.2 + index * 0.3) * 0.3;
+      collectible.position.y = collectible.position.y + floatOffset * 0.01;
+      collectible.rotation.y = time * 0.5 + index * 0.2;
+    });
   });
 
   return (
@@ -122,19 +136,53 @@ export const NeonDocksScene: React.FC = () => {
             toneMapped={false}
           />
         </mesh>
+
+        {/* Additional neon decorations */}
+        {Array.from({ length: 6 }).map((_, i) => (
+          <mesh 
+            key={i}
+            position={[
+              Math.sin(i * 1) * 18,
+              4 + Math.random() * 3,
+              Math.cos(i * 1) * 18
+            ]} 
+            castShadow
+          >
+            <boxGeometry args={[0.1, 0.1, 2]} />
+            <meshStandardMaterial 
+              color={i % 3 === 0 ? "#00f3ff" : i % 3 === 1 ? "#ff00ff" : "#00ff00"}
+              emissive={i % 3 === 0 ? "#00f3ff" : i % 3 === 1 ? "#ff00ff" : "#00ff00"}
+              emissiveIntensity={0.6}
+              toneMapped={false}
+            />
+          </mesh>
+        ))}
       </group>
 
       {/* Cargo containers */}
       <group>
-        {/* Large container */}
-        <mesh position={[-8, 1.5, -5]} castShadow receiveShadow>
-          <boxGeometry args={[4, 3, 6]} />
-          <meshStandardMaterial 
-            color="#444444"
-            roughness={0.8}
-            metalness={0.2}
-          />
-        </mesh>
+        {/* Large container - Main objective */}
+        <group position={[-8, 1.5, -5]}>
+          <mesh castShadow receiveShadow>
+            <boxGeometry args={[4, 3, 6]} />
+            <meshStandardMaterial 
+              color={crateFound ? "#ffd700" : "#444444"}
+              emissive={crateFound ? "#ffd700" : "#000000"}
+              emissiveIntensity={crateFound ? 0.3 : 0}
+              roughness={0.8}
+              metalness={0.2}
+            />
+          </mesh>
+          <Text
+            position={[0, 2.5, 0]}
+            fontSize={0.8}
+            color={crateFound ? "#ffd700" : "#ffffff"}
+            anchorX="center"
+            anchorY="middle"
+          >
+            {crateFound ? "Crate Found!" : "Mysterious Crate"}
+          </Text>
+        </group>
 
         {/* Medium container */}
         <mesh position={[8, 1, -8]} castShadow receiveShadow>
@@ -146,15 +194,28 @@ export const NeonDocksScene: React.FC = () => {
           />
         </mesh>
 
-        {/* Small container */}
-        <mesh position={[0, 0.5, -20]} castShadow receiveShadow>
-          <boxGeometry args={[2, 1, 3]} />
-          <meshStandardMaterial 
-            color="#888888"
-            roughness={0.8}
-            metalness={0.2}
-          />
-        </mesh>
+        {/* Small container - Manifest */}
+        <group position={[0, 0.5, -20]}>
+          <mesh castShadow receiveShadow>
+            <boxGeometry args={[2, 1, 3]} />
+            <meshStandardMaterial 
+              color={manifestFound ? "#32cd32" : "#888888"}
+              emissive={manifestFound ? "#32cd32" : "#000000"}
+              emissiveIntensity={manifestFound ? 0.3 : 0}
+              roughness={0.8}
+              metalness={0.2}
+            />
+          </mesh>
+          <Text
+            position={[0, 1.5, 0]}
+            fontSize={0.6}
+            color={manifestFound ? "#32cd32" : "#ffffff"}
+            anchorX="center"
+            anchorY="middle"
+          >
+            {manifestFound ? "Manifest Found!" : "Manifest"}
+          </Text>
+        </group>
       </group>
 
       {/* Crane structure */}
@@ -190,6 +251,88 @@ export const NeonDocksScene: React.FC = () => {
         </mesh>
       </group>
 
+      {/* Collectible items */}
+      <group>
+        {Array.from({ length: 8 }).map((_, i) => (
+          <Float
+            key={i}
+            speed={1.5}
+            rotationIntensity={1}
+            floatIntensity={0.5}
+            position={[
+              (Math.random() - 0.5) * 30,
+              1 + Math.random() * 2,
+              (Math.random() - 0.5) * 30
+            ]}
+          >
+            <group userData={{ isCollectible: true, id: i }}>
+              {/* Collectible object */}
+              <mesh castShadow>
+                <sphereGeometry args={[0.3]} />
+                <meshStandardMaterial 
+                  color={collectedItems.has(i) ? "#ffd700" : "#00f3ff"}
+                  emissive={collectedItems.has(i) ? "#ffd700" : "#00f3ff"}
+                  emissiveIntensity={collectedItems.has(i) ? 0.5 : 0.3}
+                  transparent
+                  opacity={collectedItems.has(i) ? 0.5 : 0.8}
+                />
+              </mesh>
+              
+              {/* Collectible label */}
+              <Text
+                position={[0, 0.8, 0]}
+                fontSize={0.3}
+                color={collectedItems.has(i) ? "#ffd700" : "#00f3ff"}
+                anchorX="center"
+                anchorY="middle"
+              >
+                {collectedItems.has(i) ? "Collected!" : `Item ${i + 1}`}
+              </Text>
+            </group>
+          </Float>
+        ))}
+      </group>
+
+      {/* Conveyor belts */}
+      <group>
+        {Array.from({ length: 3 }).map((_, i) => (
+          <group
+            key={i}
+            position={[
+              Math.sin(i * 1.2) * 12,
+              0.3,
+              Math.cos(i * 1.2) * 12
+            ]}
+          >
+            {/* Belt surface */}
+            <mesh castShadow receiveShadow>
+              <boxGeometry args={[6, 0.1, 1]} />
+              <meshStandardMaterial 
+                color="#555555"
+                roughness={0.9}
+                metalness={0.1}
+              />
+            </mesh>
+
+            {/* Belt rollers */}
+            {Array.from({ length: 4 }).map((_, j) => (
+              <mesh
+                key={j}
+                position={[j * 1.5 - 2.25, 0.2, 0]}
+                castShadow
+              >
+                <cylinderGeometry args={[0.2, 0.2, 1.2]} />
+                <meshStandardMaterial 
+                  color="#333333"
+                  roughness={0.6}
+                  metalness={0.8}
+                />
+              </mesh>
+            ))}
+          </group>
+        ))}
+      </group>
+
       {/* Water */}
       <mesh 
         ref={waterRef}
@@ -208,38 +351,37 @@ export const NeonDocksScene: React.FC = () => {
 
       {/* Floating debris */}
       <group>
-        {Array.from({ length: 10 }).map((_, i) => (
-          <mesh
+        {Array.from({ length: 15 }).map((_, i) => (
+          <Float
             key={i}
+            speed={0.5}
+            rotationIntensity={0.5}
+            floatIntensity={0.3}
             position={[
               (Math.random() - 0.5) * 80,
               -0.3,
               (Math.random() - 0.5) * 80
             ]}
-            rotation={[
-              Math.random() * Math.PI,
-              Math.random() * Math.PI,
-              Math.random() * Math.PI
-            ]}
-            castShadow
           >
-            <boxGeometry args={[
-              Math.random() * 0.5 + 0.2,
-              Math.random() * 0.5 + 0.2,
-              Math.random() * 0.5 + 0.2
-            ]} />
-            <meshStandardMaterial 
-              color="#444444"
-              roughness={0.9}
-              metalness={0.1}
-            />
-          </mesh>
+            <mesh castShadow>
+              <boxGeometry args={[
+                Math.random() * 0.5 + 0.2,
+                Math.random() * 0.5 + 0.2,
+                Math.random() * 0.5 + 0.2
+              ]} />
+              <meshStandardMaterial 
+                color="#444444"
+                roughness={0.9}
+                metalness={0.1}
+              />
+            </mesh>
+          </Float>
         ))}
       </group>
 
       {/* Atmospheric particles */}
       <group>
-        {Array.from({ length: 50 }).map((_, i) => (
+        {Array.from({ length: 80 }).map((_, i) => (
           <mesh
             key={i}
             position={[
@@ -258,6 +400,42 @@ export const NeonDocksScene: React.FC = () => {
             />
           </mesh>
         ))}
+      </group>
+
+      {/* Objective markers */}
+      <group>
+        {/* Crate objective */}
+        <Text
+          position={[-8, 5, -5]}
+          fontSize={1}
+          color="#ffd700"
+          anchorX="center"
+          anchorY="middle"
+        >
+          Find the Misplaced Crate
+        </Text>
+
+        {/* Manifest objective */}
+        <Text
+          position={[0, 3, -20]}
+          fontSize={0.8}
+          color="#32cd32"
+          anchorX="center"
+          anchorY="middle"
+        >
+          Locate the Manifest
+        </Text>
+
+        {/* Container objective */}
+        <Text
+          position={[0, 4, 0]}
+          fontSize={0.8}
+          color="#ff69b4"
+          anchorX="center"
+          anchorY="middle"
+        >
+          Identify Suspicious Container
+        </Text>
       </group>
 
       {/* Fog */}

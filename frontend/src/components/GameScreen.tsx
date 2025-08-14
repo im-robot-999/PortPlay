@@ -4,6 +4,8 @@ import { OrbitControls, Stats } from '@react-three/drei';
 import { GameSession } from '../App';
 import { useGame } from '../store/GameStore';
 import { NeonDocksScene } from '../scenes/NeonDocksScene';
+import { ForestLadlesScene } from '../scenes/ForestLadlesScene';
+import { SpookyMuseumScene } from '../scenes/SpookyMuseumScene';
 import { GameHUD } from './GameHUD';
 import { InputHandler } from './InputHandler';
 
@@ -84,6 +86,12 @@ export const GameScreen: React.FC<GameScreenProps> = ({
         case 'KeyQ':
           updateInput({ dash: true });
           break;
+        case 'KeyF':
+          updateInput({ attack: true });
+          break;
+        case 'KeyR':
+          updateInput({ useItem: true });
+          break;
         case 'Escape':
           onPause();
           break;
@@ -120,6 +128,12 @@ export const GameScreen: React.FC<GameScreenProps> = ({
         case 'KeyQ':
           updateInput({ dash: false });
           break;
+        case 'KeyF':
+          updateInput({ attack: false });
+          break;
+        case 'KeyR':
+          updateInput({ useItem: false });
+          break;
       }
     };
 
@@ -132,12 +146,49 @@ export const GameScreen: React.FC<GameScreenProps> = ({
     };
   }, [updateInput, onPause]);
 
+  // Render the appropriate scene based on chapter
+  const renderScene = () => {
+    switch (gameSession.chapterId) {
+      case 'neon-docks':
+        return <NeonDocksScene />;
+      case 'forest-ladles':
+        return <ForestLadlesScene />;
+      case 'spooky-museum':
+        return <SpookyMuseumScene />;
+      default:
+        return <NeonDocksScene />; // Fallback to neon docks
+    }
+  };
+
+  // Get chapter display name
+  const getChapterName = () => {
+    switch (gameSession.chapterId) {
+      case 'neon-docks':
+        return 'Neon Docks: A Slippery Start';
+      case 'forest-ladles':
+        return 'Forest of Lost Ladles';
+      case 'spooky-museum':
+        return 'Spooky Museum';
+      default:
+        return 'Unknown Chapter';
+    }
+  };
+
   if (!isGameReady) {
     return (
       <div className="min-h-screen bg-cyber-dark flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-neon-blue mx-auto mb-4"></div>
-          <p className="text-gray-400">Initializing game world...</p>
+          <div className="relative">
+            <div className="w-16 h-16 border-4 border-neon-blue border-t-transparent rounded-full animate-spin mx-auto mb-6"></div>
+            <div className="absolute inset-0 w-16 h-16 border-4 border-neon-pink border-b-transparent rounded-full animate-spin mx-auto" style={{ animationDelay: '-0.5s' }}></div>
+          </div>
+          <p className="text-gray-300 font-cyber text-lg mb-4">Initializing game world...</p>
+          <p className="text-gray-500 text-sm">{getChapterName()}</p>
+          <div className="mt-4 flex space-x-2 justify-center">
+            <div className="w-2 h-2 bg-neon-blue rounded-full animate-pulse"></div>
+            <div className="w-2 h-2 bg-neon-pink rounded-full animate-pulse" style={{ animationDelay: '0.2s' }}></div>
+            <div className="w-2 h-2 bg-neon-green rounded-full animate-pulse" style={{ animationDelay: '0.4s' }}></div>
+          </div>
         </div>
       </div>
     );
@@ -166,7 +217,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({
         }}
       >
         {/* Scene */}
-        {gameSession.chapterId === 'neon-docks' && <NeonDocksScene />}
+        {renderScene()}
         
         {/* Camera Controls */}
         <OrbitControls 
@@ -201,13 +252,11 @@ export const GameScreen: React.FC<GameScreenProps> = ({
         onReturnToLobby={onReturnToLobby}
       />
 
-      {/* Input Handler (for debugging) */}
-      {import.meta.env.DEV && (
-        <InputHandler 
-          currentInput={currentInput}
-          onInputChange={updateInput}
-        />
-      )}
+      {/* Input Handler */}
+      <InputHandler 
+        currentInput={currentInput} 
+        onInputChange={updateInput}
+      />
     </div>
   );
 };

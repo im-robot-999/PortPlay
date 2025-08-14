@@ -41,6 +41,49 @@
   .cyber-panel {
     @apply bg-gradient-to-br from-cyber-gray to-cyber-dark border border-cyber-light rounded-lg p-4;
   }
+
+  /* Enhanced glass morphism effect */
+  .glass-panel {
+    @apply bg-gradient-to-br from-cyber-gray/80 to-cyber-dark/80 backdrop-blur-sm border border-cyber-light/50;
+  }
+
+  /* Floating animation for background elements */
+  .float-animation {
+    animation: float 6s ease-in-out infinite;
+  }
+
+  /* Pulse glow effect */
+  .pulse-glow {
+    animation: pulseGlow 3s ease-in-out infinite alternate;
+  }
+
+  /* Typewriter effect for text */
+  .typewriter {
+    overflow: hidden;
+    border-right: 2px solid #00f3ff;
+    white-space: nowrap;
+    animation: typing 3.5s steps(40, end), blink-caret 0.75s step-end infinite;
+  }
+
+  /* Hover lift effect */
+  .hover-lift {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+  }
+
+  .hover-lift:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 10px 25px rgba(0, 243, 255, 0.2);
+  }
+
+  /* Gradient text animation */
+  .gradient-text-animate {
+    background: linear-gradient(45deg, #00f3ff, #ff00ff, #00ff00, #00f3ff);
+    background-size: 400% 400%;
+    animation: gradientShift 4s ease infinite;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
 }
 
 @layer utilities {
@@ -51,6 +94,14 @@
   .glow-effect {
     box-shadow: 0 0 20px rgba(0, 243, 255, 0.6);
   }
+
+  .glow-effect-pink {
+    box-shadow: 0 0 20px rgba(255, 0, 255, 0.6);
+  }
+
+  .glow-effect-green {
+    box-shadow: 0 0 20px rgba(0, 255, 0, 0.6);
+  }
   
   .scrollbar-hide {
     -ms-overflow-style: none;
@@ -60,4 +111,113 @@
   .scrollbar-hide::-webkit-scrollbar {
     display: none;
   }
+
+  /* Backdrop blur utilities */
+  .backdrop-blur-cyber {
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+  }
+
+  /* Enhanced shadow utilities */
+  .shadow-cyber {
+    box-shadow: 0 0 30px rgba(0, 243, 255, 0.3);
+  }
+
+  .shadow-cyber-pink {
+    box-shadow: 0 0 30px rgba(255, 0, 255, 0.3);
+  }
+
+  .shadow-cyber-green {
+    box-shadow: 0 0 30px rgba(0, 255, 0, 0.3);
+  }
+}
+
+/* Custom keyframe animations */
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-20px);
+  }
+}
+
+@keyframes pulseGlow {
+  0% {
+    box-shadow: 0 0 5px rgba(0, 243, 255, 0.5);
+  }
+  100% {
+    box-shadow: 0 0 20px rgba(0, 243, 255, 0.8), 0 0 30px rgba(0, 243, 255, 0.6);
+  }
+}
+
+@keyframes typing {
+  from {
+    width: 0;
+  }
+  to {
+    width: 100%;
+  }
+}
+
+@keyframes blink-caret {
+  from, to {
+    border-color: transparent;
+  }
+  50% {
+    border-color: #00f3ff;
+  }
+}
+
+@keyframes gradientShift {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+@keyframes glow {
+  0% {
+    box-shadow: 0 0 5px #00f3ff, 0 0 10px #00f3ff, 0 0 15px #00f3ff;
+  }
+  100% {
+    box-shadow: 0 0 10px #00f3ff, 0 0 20px #00f3ff, 0 0 30px #00f3ff;
+  }
+}
+
+/* Enhanced focus states for better accessibility */
+input:focus, select:focus, button:focus {
+  outline: none;
+  ring: 2px;
+  ring-color: #00f3ff;
+  ring-offset: 2px;
+  ring-offset-color: #0a0a0a;
+}
+
+/* Smooth transitions for all interactive elements */
+* {
+  transition: all 0.2s ease-in-out;
+}
+
+/* Custom scrollbar for webkit browsers */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #1a1a1a;
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(45deg, #00f3ff, #ff00ff);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(45deg, #00d4e0, #e000e0);
 }
