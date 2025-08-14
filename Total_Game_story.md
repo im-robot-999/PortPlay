@@ -741,3 +741,24 @@ If you want, I can now make a **combined master document** for all **three games
 This would make them all feel like part of **one big multiplayer universe**.
 
 Do you want me to merge all three concepts into one master design? That would give you a huge ready-to-code reference.
+
+
+I'll run a lint check on the updated files to ensure there are no remaining TypeScript/ESLint issues.
+Ran tool
+All three chapters are now implemented, aligned with your design doc, and free of TypeScript/ESLint errors.
+
+What I fixed
+- ForestLadlesScene.tsx: corrected metalness types, closed JSX props, removed unused imports; scene animates trees, swinging logs/platforms, collectibles, NPC chef.
+- SpookyMuseumScene.tsx: fixed metalness types and closing braces; removed unused setters; exhibits glow when “solved”, floating orbs/memory fragments, animated curator ghost, museum architecture and effects.
+- NeonDocksScene.tsx: added objectives, collectibles, conveyors, improved neon effects; removed unused setters; consistent materials.
+- GameScreen.tsx: added routing for all three scenes; fixed input handling to match `useGameStore.updateInput` signature; provided `onInputChange` to `InputHandler`.
+- LobbyScreen.tsx: removed unused index in map to satisfy linter.
+
+Status
+- Lint/type: clean on the touched files.
+- Scenes: load based on `chapterId` values: `neon-docks`, `forest-ladles`, `spooky-museum`.
+- Controls: WASD, Space, Shift, E, Q, F, R mapped in input handler.
+
+Next suggested steps
+- Want me to add the Objective Tracker/HUD to reflect the design doc (objectives, collectibles, timers)?
+- I can also generate the README + asset checklist to match your prompt, or wire up basic puzzle/quest state per chapter.
