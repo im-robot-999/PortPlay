@@ -9,6 +9,7 @@ export class RoomManager {
   private rooms: Map<string, GameRoom> = new Map();
   private gameLoops: Map<string, GameLoop> = new Map();
   private roomCodes: Map<string, string> = new Map(); // code -> roomId
+  private broadcaster?: (roomId: string, event: string, data: any) => void;
 
   constructor() {}
 
@@ -271,10 +272,18 @@ export class RoomManager {
   broadcastToRoom(roomId: string, event: string, data: any): void {
     const room = this.rooms.get(roomId);
     if (!room) return;
-
-    // This would be implemented with Socket.io
-    // For now, we just log it
+    if (this.broadcaster) {
+      this.broadcaster(roomId, event, data);
+      return;
+    }
     console.log(`Broadcasting ${event} to room ${room.code}:`, data);
+  }
+
+  /**
+   * Sets a broadcaster callback (e.g., Socket.io) to emit events to a room
+   */
+  setBroadcaster(cb: (roomId: string, event: string, data: any) => void): void {
+    this.broadcaster = cb;
   }
 
   /**

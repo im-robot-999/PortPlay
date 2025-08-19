@@ -8,6 +8,9 @@ import { ForestLadlesScene } from '../scenes/ForestLadlesScene';
 import { SpookyMuseumScene } from '../scenes/SpookyMuseumScene';
 import { GameHUD } from './GameHUD';
 import { InputHandler } from './InputHandler';
+import { socket } from '../network/socket';
+import { InputSnapshot } from '@portplay/shared';
+import { PlayersRenderer } from './PlayersRenderer';
 
 interface GameScreenProps {
   gameSession: GameSession;
@@ -39,6 +42,13 @@ export const GameScreen: React.FC<GameScreenProps> = ({
     setCurrentRoom(gameSession.roomId);
     setConnectionStatus(true);
     setGameRunning(true);
+    // Subscribe to server snapshots (for future interpolation/remote players)
+    const onSnapshot = (snapshot: any) => {
+      // Store snapshot for HUD/remote player rendering
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (useGame as any).getState().setGameSnapshot(snapshot);
+    };
+    socket.on('game_snapshot', onSnapshot);
     
     // Simulate connection delay
     setTimeout(() => {
@@ -51,11 +61,29 @@ export const GameScreen: React.FC<GameScreenProps> = ({
       setGameRunning(false);
       setCurrentRoom(null);
       resetInput();
+      socket.off('game_snapshot', onSnapshot);
     };
   }, [gameSession, setPlayer, setCurrentRoom, setConnectionStatus, setGameRunning, resetInput]);
 
   // Handle keyboard input
   useEffect(() => {
+    let sequence = 0;
+    let rafId: number;
+
+    const sendInput = () => {
+      sequence += 1;
+      const payload: InputSnapshot = {
+        sequence,
+        playerId: socket.id,
+        input: currentInput,
+        timestamp: Date.now()
+      };
+      socket.emit('player_input', payload);
+      rafId = requestAnimationFrame(sendInput);
+    };
+
+    rafId = requestAnimationFrame(sendInput);
+
     const handleKeyDown = (event: KeyboardEvent) => {
       switch (event.code) {
         case 'KeyW':
@@ -143,8 +171,9 @@ export const GameScreen: React.FC<GameScreenProps> = ({
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('keyup', handleKeyUp);
+      cancelAnimationFrame(rafId);
     };
-  }, [updateInput, onPause]);
+  }, [updateInput, onPause, currentInput]);
 
   // Render the appropriate scene based on chapter
   const renderScene = () => {
@@ -218,6 +247,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({
       >
         {/* Scene */}
         {renderScene()}
+        <PlayersRenderer />
         
         {/* Camera Controls */}
         <OrbitControls 

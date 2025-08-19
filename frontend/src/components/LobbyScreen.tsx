@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { GameSession } from '../App';
+import { socket } from '../network/socket';
 
 interface LobbyScreenProps {
   onStartGame: (session: GameSession) => void;
@@ -49,36 +50,33 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({ onStartGame }) => {
     setIsCreatingRoom(true);
     
     try {
-      const playerId = Math.random().toString(36).substr(2, 9);
-      
-      const response = await fetch(`${API_BASE}/api/rooms`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          hostId: playerId,
-          hostUsername: username.trim(),
-          chapterId: selectedChapter,
-          maxPlayers: 8
-        }),
+      // Create via sockets to get real socket id as playerId
+      await new Promise<void>((resolve, reject) => {
+        socket.emit('create_room', { username: username.trim(), chapterId: selectedChapter });
+        const onCreated = (payload: any) => {
+          socket.off('room_created', onCreated);
+          const session: GameSession = {
+            roomCode: payload.roomCode,
+            roomId: payload.roomId,
+            playerId: payload.hostId,
+            username: username.trim(),
+            chapterId: selectedChapter
+          };
+          onStartGame(session);
+          resolve();
+        };
+        const onError = (err: any) => {
+          socket.off('error', onError);
+          reject(new Error(err?.message || 'Socket error'));
+        };
+        socket.once('room_created', onCreated);
+        socket.once('error', onError);
+        setTimeout(() => {
+          socket.off('room_created', onCreated);
+          socket.off('error', onError);
+          reject(new Error('Timeout creating room'));
+        }, 8000);
       });
-
-      if (!response.ok) {
-        throw new Error('Failed to create room');
-      }
-
-      const data = await response.json();
-      
-      const session: GameSession = {
-        roomCode: data.room.code,
-        roomId: data.room.id,
-        playerId: playerId,
-        username: username.trim(),
-        chapterId: selectedChapter
-      };
-
-      onStartGame(session);
     } catch (error) {
       console.error('Error creating room:', error);
       alert('Failed to create room. Please try again.');
@@ -96,19 +94,33 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({ onStartGame }) => {
     setIsJoiningRoom(true);
     
     try {
-      const playerId = Math.random().toString(36).substr(2, 9);
-      
-      // For now, we'll simulate joining a room
-      // In a real implementation, this would call the Socket.io join_room event
-      const session: GameSession = {
-        roomCode: roomCode.trim().toUpperCase(),
-        roomId: `room_${Date.now()}`,
-        playerId: playerId,
-        username: username.trim(),
-        chapterId: 'neon-docks' // Default chapter for now
-      };
-
-      onStartGame(session);
+      const joinCode = roomCode.trim().toUpperCase();
+      await new Promise<void>((resolve, reject) => {
+        socket.emit('join_room', { roomCode: joinCode, username: username.trim() });
+        const onJoined = (payload: any) => {
+          socket.off('room_joined', onJoined);
+          const session: GameSession = {
+            roomCode: payload.roomCode,
+            roomId: payload.roomId,
+            playerId: socket.id,
+            username: username.trim(),
+            chapterId: selectedChapter
+          };
+          onStartGame(session);
+          resolve();
+        };
+        const onError = (err: any) => {
+          socket.off('error', onError);
+          reject(new Error(err?.message || 'Socket error'));
+        };
+        socket.once('room_joined', onJoined);
+        socket.once('error', onError);
+        setTimeout(() => {
+          socket.off('room_joined', onJoined);
+          socket.off('error', onError);
+          reject(new Error('Timeout joining room'));
+        }, 8000);
+      });
     } catch (error) {
       console.error('Error joining room:', error);
       alert('Failed to join room. Please check the room code and try again.');

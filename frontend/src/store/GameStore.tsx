@@ -76,7 +76,13 @@ const useGameStore = create<GameState>((set) => ({
   },
 
   setGameSnapshot: (snapshot: GameSnapshot) => {
-    set({ gameSnapshot: snapshot });
+    set((state) => {
+      const me = state.playerId ? snapshot.players.find(p => p.id === state.playerId) : undefined;
+      return {
+        gameSnapshot: snapshot,
+        playerState: me ?? state.playerState
+      };
+    });
   },
 
   setCurrentRoom: (roomId: string | null) => {

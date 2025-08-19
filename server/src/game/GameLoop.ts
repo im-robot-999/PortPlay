@@ -18,6 +18,7 @@ export class GameLoop {
   private quests: QuestProgress[] = [];
   private pendingInputs: any[] = [];
   private lastInputTimes: Record<string, number> = {};
+  private lastAttackTimes: Record<string, number> = {};
   private onSnapshotCallback?: (snapshot: GameSnapshot) => void;
 
   constructor(
@@ -166,14 +167,62 @@ export class GameLoop {
     });
 
     // Apply valid inputs to game state
+    const pendingDamages: Array<{ targetId: string; damage: number }> = [];
     validInputs.forEach(input => {
+      // Movement and state
       this.players = this.players.map(player => {
         if (player.id === input.playerId) {
           return this.applyInputToPlayer(player, input.input, deltaTime);
         }
         return player;
       });
+
+      // Attack handling (simple melee/hitscan)
+      if (input.input.attack) {
+        const now = Date.now();
+        const lastAtk = this.lastAttackTimes[input.playerId] || 0;
+        const ATTACK_COOLDOWN_MS = 500;
+        if (now - lastAtk >= ATTACK_COOLDOWN_MS) {
+          const attacker = this.players.find(p => p.id === input.playerId);
+          if (attacker) {
+            let closestTarget: PlayerState | undefined;
+            let closestDistSq = Number.POSITIVE_INFINITY;
+            // find nearest other player
+            this.players.forEach(p => {
+              if (p.id === attacker.id) return;
+              const dx = p.position.x - attacker.position.x;
+              const dy = p.position.y - attacker.position.y;
+              const dz = p.position.z - attacker.position.z;
+              const distSq = dx * dx + dy * dy + dz * dz;
+              if (distSq < closestDistSq) {
+                closestDistSq = distSq;
+                closestTarget = p;
+              }
+            });
+            const ATTACK_RANGE = 2.5; // meters
+            if (closestTarget && closestDistSq <= ATTACK_RANGE * ATTACK_RANGE) {
+              const DAMAGE = 10;
+              pendingDamages.push({ targetId: closestTarget.id, damage: DAMAGE });
+              this.lastAttackTimes[input.playerId] = now;
+            }
+          }
+        }
+      }
     });
+
+    // Apply accumulated damages
+    if (pendingDamages.length > 0) {
+      const damageByTarget: Record<string, number> = {};
+      pendingDamages.forEach(d => {
+        damageByTarget[d.targetId] = (damageByTarget[d.targetId] || 0) + d.damage;
+      });
+      this.players = this.players.map(p => {
+        const dmg = damageByTarget[p.id] || 0;
+        if (dmg <= 0) return p;
+        const newHealth = Math.max(0, p.health - dmg);
+        return { ...p, health: newHealth };
+      });
+    }
 
     // Clear processed inputs
     this.pendingInputs = [];
@@ -202,6 +251,22 @@ export class GameLoop {
       newAnimationState = input.run ? AnimationState.RUNNING : AnimationState.WALKING;
     } else {
       newAnimationState = AnimationState.IDLE;
+    }
+
+    // Basic jump
+    if (input.jump && player.position.y <= 0.1) {
+      newVelocity.y = 8.0;
+      newAnimationState = AnimationState.JUMPING;
+    }
+
+    // Basic dash impulse
+    if (input.dash) {
+      const dashX = (input.right ? 1 : 0) - (input.left ? 1 : 0);
+      const dashZ = (input.backward ? 1 : 0) - (input.forward ? 1 : 0);
+      const length = Math.max(1, Math.hypot(dashX, dashZ));
+      newVelocity.x += (dashX / length) * 15.0;
+      newVelocity.z += (dashZ / length) * 15.0;
+      newAnimationState = AnimationState.DASHING;
     }
 
     return {

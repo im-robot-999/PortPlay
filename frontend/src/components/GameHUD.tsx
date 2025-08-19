@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { GameSession } from '../App';
 import { InputState } from '@portplay/shared';
+import { useGame } from '../store/GameStore';
 
 interface GameHUDProps {
   gameSession: GameSession;
@@ -16,6 +17,7 @@ export const GameHUD: React.FC<GameHUDProps> = ({
 }) => {
   const [showControls, setShowControls] = useState(false);
   const [showInventory, setShowInventory] = useState(false);
+  const { playerState } = useGame();
 
   return (
     <>
@@ -51,7 +53,7 @@ export const GameHUD: React.FC<GameHUDProps> = ({
               </div>
               <div>
                 <span className="text-gray-400 text-sm">Health:</span>
-                <div className="text-green-400 font-bold">100/100</div>
+                <div className="text-green-400 font-bold">{playerState?.health ?? 100}/{playerState?.maxHealth ?? 100}</div>
               </div>
               <div>
                 <span className="text-gray-400 text-sm">Level:</span>
@@ -67,6 +69,13 @@ export const GameHUD: React.FC<GameHUDProps> = ({
               className="btn-secondary px-3 py-2"
             >
               📦
+            </button>
+            <button
+              onClick={() => navigator.clipboard.writeText(gameSession.roomCode)}
+              className="btn-secondary px-3 py-2"
+              title="Copy room code"
+            >
+              📋
             </button>
             <button
               onClick={() => setShowControls(!showControls)}

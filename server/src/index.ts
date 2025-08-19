@@ -36,6 +36,9 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 // Initialize game systems
 const roomManager = new RoomManager();
 const gameSocketHandler = new GameSocketHandler(io, roomManager);
+roomManager.setBroadcaster((roomId, event, data) => {
+  io.to(roomId).emit(event, data);
+});
 
 // Health check endpoint
 app.get('/health', (req, res) => {
